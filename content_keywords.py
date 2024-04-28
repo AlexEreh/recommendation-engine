@@ -1,5 +1,4 @@
 import pandas as pd
-from pandas import DataFrame
 from ast import literal_eval
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -27,7 +26,7 @@ def clean_data(x):
     if isinstance(x, list):
         return [str.lower(i.replace(" ", "")) for i in x]
     else:
-        # Check if director exists. If not, return empty string
+        # Проверяем что директор существует. Если нет, возвращаем пустую строку
         if isinstance(x, str):
             return str.lower(x.replace(" ", ""))
         else:
@@ -49,10 +48,11 @@ def create_soup(x):
 
 def get_content_keywords_recs(
         title: str
-) -> DataFrame:
+) -> pd.DataFrame:
     metadata = pd.read_csv('dataset/movies_metadata.csv', low_memory=False)
     credits = pd.read_csv('dataset/credits.csv')
     keywords = pd.read_csv('dataset/keywords.csv')
+    # Сломанные записи
     metadata = metadata.drop([19730, 29503, 35587])
     keywords['id'] = keywords['id'].astype('int')
     credits['id'] = credits['id'].astype('int')

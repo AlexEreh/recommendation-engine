@@ -1,22 +1,24 @@
 import polars as pl
-from polars import DataFrame
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
 
-def get_content_tfidf_recs(movies_metadata: DataFrame, title: str) -> DataFrame:
-    tfidf = TfidfVectorizer(stop_words='english')
-    movies_metadata = movies_metadata.with_columns(
+def get_content_tfidf_recs(movies_metadata: pl.DataFrame, title: str) -> pl.DataFrame:
+    tfidf: TfidfVectorizer = TfidfVectorizer(stop_words='english')
+    movies_metadata: pl.DataFrame = movies_metadata.with_columns(
         pl.col('overview').fill_null('')
-    )
-    overview_df = movies_metadata.select('overview').to_series()
+    ).drop('vote_average', 'vote_count')
+    print(movies_metadata)
+    overview_series: pl.Series = movies_metadata.select('overview').to_series()
 
     # Составляем матрицу TF-IDF
-    tfidf_matrix = tfidf.fit_transform(overview_df)
-    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
-    movies_metadata = movies_metadata.with_row_index()
+    from scipy.sparse import csr_matrix
+    tfidf_matrix: csr_matrix = tfidf.fit_transform(overview_series)
+    cosine_sim: np.ndarray = linear_kernel(tfidf_matrix, tfidf_matrix)
+    movies_metadata: pl.DataFrame = movies_metadata.with_row_index()
     # Получаем индекс фильма, название которого совпадает с заданным
-    expr = pl.all_horizontal(
+    expr: pl.Expr = pl.all_horizontal(
         pl.col('title') == title
     )
     idx = movies_metadata.row(by_predicate=expr, named=True)['index']
